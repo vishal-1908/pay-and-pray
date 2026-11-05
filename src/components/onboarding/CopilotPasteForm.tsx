@@ -39,7 +39,7 @@ export function CopilotPasteForm() {
         placeholder="ghp_… or github_pat_…"
         hint={
           <>
-            Any GitHub personal access token — no special permission needed. Your plan and quota are
+            A GitHub token with no scopes selected (tokens with extra scopes are rejected). Your plan and quota are
             read from your account.{' '}
             <button
               type="button"

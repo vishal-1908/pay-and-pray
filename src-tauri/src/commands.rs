@@ -51,6 +51,13 @@ async fn connect_copilot_account(
     let identity = crate::github_signin::resolve_identity(token)
         .await
         .map_err(|e| format!("couldn't read your GitHub account: {e}"))?;
+    let excess = identity.excess_scopes();
+    if !excess.is_empty() {
+        return Err(format!(
+            "this token has broader access than needed ({}). Use \"Sign in with GitHub\" or create a token with no scopes.",
+            excess.join(", ")
+        ));
+    }
     let account = credentials::CopilotAccount {
         id: identity.id,
         login: identity.login.clone(),
