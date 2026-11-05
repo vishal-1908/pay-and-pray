@@ -99,6 +99,14 @@ export function startClaudeSignin(): Promise<void> {
   return invoke('start_claude_signin');
 }
 
+/**
+ * Connect using Claude Code's own login (no embedded browser). Emits
+ * `claude-signed-in`, or `claude-signin-error` with a message on failure.
+ */
+export function connectClaudeCode(): Promise<void> {
+  return invoke('connect_claude_code');
+}
+
 /** Open (or focus) the settings window. */
 export function openSettings(): Promise<void> {
   return invoke('open_settings');

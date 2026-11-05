@@ -610,8 +610,17 @@ struct UsageResponse {
     #[serde(default)]
     rate_limit: Option<UsageRateLimit>,
     /// Extra per-limit snapshots; Codex prefers the one tagged `limit_id: "codex"`.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "null_as_default")]
     additional_rate_limits: Vec<UsageAdditional>,
+}
+
+/// The API sends `null` (not a missing field) when there are no extra limits.
+fn null_as_default<'de, D, T>(d: D) -> Result<T, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Default + Deserialize<'de>,
+{
+    Ok(Option::<T>::deserialize(d)?.unwrap_or_default())
 }
 
 impl UsageResponse {

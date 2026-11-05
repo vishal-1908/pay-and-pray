@@ -210,6 +210,47 @@ pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<(), String> {
     result.map_err(|e| e.to_string())
 }
 
+/// Connect via Claude Code's own OAuth login (read live from its keychain item;
+/// macOS shows an access prompt the first time). Verifies the token against the
+/// usage endpoint before opting in, so a bad state never looks "connected".
+/// Emits `claude-signed-in` on success or `claude-signin-error` on failure.
+#[tauri::command]
+pub async fn connect_claude_code(
+    app: AppHandle,
+    state: tauri::State<'_, Arc<AppState>>,
+) -> Result<(), String> {
+    let state = state.inner().clone();
+    let fail = |msg: &str| {
+        let _ = app.emit("claude-signin-error", msg);
+    };
+
+    // Keychain access can block on the macOS prompt, so keep it off the runtime.
+    let token = tokio::task::spawn_blocking(|| credentials::Credentials::new().claude_code_token())
+        .await
+        .map_err(|e| e.to_string())?;
+    let Some(token) = token else {
+        fail("No Claude Code login found. Run `claude`, sign in with /login, then try again.");
+        return Ok(());
+    };
+    if let Err(e) = crate::sources::claude::ClaudeSource::default()
+        .fetch_oauth(&token)
+        .await
+    {
+        warn!(?e, "claude code token rejected");
+        fail("Claude Code's login was rejected. Run `claude` and /login again, then retry.");
+        return Ok(());
+    }
+    if let Err(e) = state.credentials.set("claude.oauth", "1") {
+        error!(?e, "failed to store claude oauth opt-in");
+        fail("Couldn't save the connection to the keychain.");
+        return Ok(());
+    }
+    let _ = app.emit("claude-signed-in", ());
+    let snapshot = poll_once(state.clone()).await;
+    let _ = app.emit("tokens-updated", &snapshot);
+    Ok(())
+}
+
 /// Open an embedded Claude login window. The webview is a real browser engine,
 /// so it clears the Cloudflare challenge our HTTP client cannot. After sign-in,
 /// poll the cookie store for `sessionKey`, store it, emit `claude-signed-in`, and
@@ -272,6 +313,10 @@ pub async fn start_claude_signin(
                     error!(?e, "failed to store claude session key");
                 }
                 let _ = app_handle.emit("claude-signed-in", ());
+                // The keychain is now the only copy; wipe the webview's session.
+                if let Err(e) = window.clear_all_browsing_data() {
+                    warn!(?e, "failed to clear login webview data");
+                }
                 let _ = window.close();
                 let snapshot = poll_once(state.clone()).await;
                 let _ = app_handle.emit("tokens-updated", &snapshot);

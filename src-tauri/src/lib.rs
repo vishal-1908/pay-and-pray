@@ -126,6 +126,7 @@ pub fn run() {
             commands::get_autostart,
             commands::set_autostart,
             commands::start_claude_signin,
+            commands::connect_claude_code,
             commands::start_copilot_signin,
             commands::list_copilot_accounts,
             commands::remove_copilot_account,

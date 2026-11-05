@@ -4,6 +4,8 @@
 //!
 //! - `claude.session`   — the `sessionKey` cookie value
 //! - `claude.orgId`     — cached Claude organization UUID
+//! - `claude.oauth`     — marker: the user opted in to reading Claude Code's own
+//!   OAuth login (we never copy that token; see [`Credentials::claude_code_token`])
 //! - `copilot.token`    — GitHub Bearer token (any classic/OAuth token)
 //!
 //! Multiple GitHub Copilot accounts are supported. Each connected account is
@@ -22,6 +24,7 @@ use serde::{Deserialize, Serialize};
 use tracing::warn;
 
 const SERVICE: &str = "pay-and-pray";
+const CLAUDE_CODE_SERVICE: &str = "Claude Code-credentials";
 const COPILOT_ACCOUNTS_KEY: &str = "copilot.accounts";
 
 /// A connected GitHub Copilot account. `id` is the GitHub user id (stable across
@@ -47,6 +50,30 @@ impl Credentials {
 
     pub fn claude_session(&self) -> Option<String> {
         get("claude.session")
+    }
+
+    /// Whether the user chose "Use Claude Code login". Gates every read of Claude
+    /// Code's keychain item so we never trigger its access prompt uninvited.
+    pub fn claude_oauth_enabled(&self) -> bool {
+        get("claude.oauth").is_some()
+    }
+
+    /// Claude Code's OAuth access token, read live from its own keychain item
+    /// (macOS only). Never copied into our keychain — Claude Code refreshes it.
+    /// `None` when absent, unreadable or expired.
+    pub fn claude_code_token(&self) -> Option<String> {
+        let account = std::env::var("USER")
+            .or_else(|_| std::env::var("LOGNAME"))
+            .ok()?;
+        let raw = match Entry::new(CLAUDE_CODE_SERVICE, &account).and_then(|e| e.get_password()) {
+            Ok(v) => v,
+            Err(keyring::Error::NoEntry) => return None,
+            Err(e) => {
+                warn!(error = ?e, "claude code keychain read failed");
+                return None;
+            }
+        };
+        parse_claude_code_token(&raw, chrono::Utc::now().timestamp_millis())
     }
 
     pub fn claude_org_id(&self) -> Option<String> {
@@ -139,6 +166,23 @@ fn upsert_account(accounts: &mut Vec<CopilotAccount>, account: CopilotAccount) {
     }
 }
 
+/// Extract `claudeAiOauth.accessToken` from Claude Code's credentials JSON,
+/// rejecting an empty or already-expired token (`expiresAt` is epoch millis).
+fn parse_claude_code_token(raw: &str, now_ms: i64) -> Option<String> {
+    let v: serde_json::Value = serde_json::from_str(raw).ok()?;
+    let oauth = v.get("claudeAiOauth")?;
+    let token = oauth.get("accessToken")?.as_str()?.trim();
+    if token.is_empty() {
+        return None;
+    }
+    if let Some(exp) = oauth.get("expiresAt").and_then(|e| e.as_i64()) {
+        if exp <= now_ms {
+            return None;
+        }
+    }
+    Some(token.to_string())
+}
+
 fn get(key: &str) -> Option<String> {
     match Entry::new(SERVICE, key).and_then(|e| e.get_password()) {
         Ok(v) => Some(v),
@@ -158,7 +202,7 @@ fn get(key: &str) -> Option<String> {
 /// sign-out wipes them from pre-migration installs.
 pub fn service_keys(service: &str) -> Result<&'static [&'static str], String> {
     match service {
-        "claude" => Ok(&["claude.session", "claude.orgId"]),
+        "claude" => Ok(&["claude.session", "claude.orgId", "claude.oauth"]),
         "copilot" => Ok(&[
             "copilot.accounts",
             "copilot.token",
@@ -176,7 +220,7 @@ mod tests {
     #[test]
     fn service_keys_cover_each_prefix() {
         let claude = service_keys("claude").unwrap();
-        assert_eq!(claude, &["claude.session", "claude.orgId"]);
+        assert_eq!(claude, &["claude.session", "claude.orgId", "claude.oauth"]);
         assert!(claude.iter().all(|k| k.starts_with("claude.")));
 
         let copilot = service_keys("copilot").unwrap();
@@ -196,6 +240,22 @@ mod tests {
     fn service_keys_rejects_unknown_service() {
         let err = service_keys("cursor").unwrap_err();
         assert!(err.contains("cursor"), "error should name the service");
+    }
+
+    #[test]
+    fn claude_code_token_parses_and_checks_expiry() {
+        let json = r#"{"claudeAiOauth":{"accessToken":"tok","expiresAt":2000}}"#;
+        assert_eq!(parse_claude_code_token(json, 1000).as_deref(), Some("tok"));
+        assert_eq!(parse_claude_code_token(json, 2000), None);
+        assert_eq!(
+            parse_claude_code_token(r#"{"claudeAiOauth":{"accessToken":"tok"}}"#, 1000).as_deref(),
+            Some("tok")
+        );
+        assert_eq!(
+            parse_claude_code_token(r#"{"claudeAiOauth":{"accessToken":""}}"#, 0),
+            None
+        );
+        assert_eq!(parse_claude_code_token("not json", 0), None);
     }
 
     fn acct(id: &str, login: &str, label: &str) -> CopilotAccount {

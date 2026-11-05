@@ -18,10 +18,12 @@ const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleW
      (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
 
 const DEFAULT_BASE_URL: &str = "https://claude.ai";
+const DEFAULT_OAUTH_BASE_URL: &str = "https://api.anthropic.com";
 
 pub struct ClaudeSource {
     client: Client,
     base_url: String,
+    oauth_base_url: String,
 }
 
 impl Default for ClaudeSource {
@@ -34,6 +36,7 @@ impl Default for ClaudeSource {
         Self {
             client,
             base_url: DEFAULT_BASE_URL.to_string(),
+            oauth_base_url: DEFAULT_OAUTH_BASE_URL.to_string(),
         }
     }
 }
@@ -42,6 +45,7 @@ impl ClaudeSource {
     /// Override the base URL — used only in tests to point at a [`wiremock`] server.
     #[cfg(test)]
     pub(crate) fn with_base_url(base_url: impl Into<String>) -> Self {
+        let base_url: String = base_url.into();
         let client = Client::builder()
             .user_agent(USER_AGENT)
             .timeout(std::time::Duration::from_secs(10))
@@ -49,8 +53,40 @@ impl ClaudeSource {
             .expect("reqwest client builds");
         Self {
             client,
-            base_url: base_url.into(),
+            oauth_base_url: base_url.clone(),
+            base_url,
         }
+    }
+
+    /// Fetch usage with Claude Code's OAuth bearer token — the same scoped login
+    /// `claude` uses, so there is no session cookie and no Cloudflare challenge.
+    pub(crate) async fn fetch_oauth(&self, token: &str) -> Result<ServiceStatus, SourceError> {
+        let response = self
+            .client
+            .get(format!("{}/api/oauth/usage", self.oauth_base_url))
+            .bearer_auth(token)
+            .header("anthropic-beta", "oauth-2025-04-20")
+            .header(header::ACCEPT, "application/json")
+            .send()
+            .await?;
+
+        let status = response.status();
+        if status == 401 || status == 403 {
+            return Err(SourceError::AuthRejected(
+                response.text().await.unwrap_or_default(),
+            ));
+        }
+        if !status.is_success() {
+            return Err(SourceError::HttpStatus {
+                status: status.as_u16(),
+                body: response.text().await.unwrap_or_default(),
+            });
+        }
+        let usage: UsageResponse = response
+            .json()
+            .await
+            .map_err(|e| SourceError::Parse(e.to_string()))?;
+        Ok(usage.into_status())
     }
 
     /// Core logic: fetch usage with already-resolved credentials.
@@ -179,6 +215,18 @@ impl QuotaSource for ClaudeSource {
     }
 
     async fn fetch(&self, creds: &Credentials) -> Result<ServiceStatus, SourceError> {
+        // Prefer Claude Code's own OAuth login when the user opted in; fall back
+        // to a stored session cookie if it's missing, expired or rejected.
+        if creds.claude_oauth_enabled() {
+            match creds.claude_code_token() {
+                Some(token) => match self.fetch_oauth(&token).await {
+                    Ok(status) => return Ok(status),
+                    Err(e) => warn!(?e, "claude oauth fetch failed; trying session cookie"),
+                },
+                None => warn!("claude code token unavailable; trying session cookie"),
+            }
+        }
+
         let session_key = creds
             .claude_session()
             .ok_or(SourceError::MissingCredentials("claude.session"))?;
@@ -328,6 +376,43 @@ mod tests {
         assert_eq!(status.plan, "");
         // five_hour + seven_day + seven_day_sonnet + seven_day_opus are surfaced.
         assert_eq!(status.quotas.len(), 4);
+    }
+
+    #[tokio::test]
+    async fn oauth_fetch_sends_bearer_and_parses_usage() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/api/oauth/usage"))
+            .and(wiremock::matchers::header("authorization", "Bearer tok"))
+            .and(wiremock::matchers::header(
+                "anthropic-beta",
+                "oauth-2025-04-20",
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(usage_body()))
+            .mount(&server)
+            .await;
+
+        let status = ClaudeSource::with_base_url(server.uri())
+            .fetch_oauth("tok")
+            .await
+            .unwrap();
+        assert_eq!(status.quotas.len(), 4);
+    }
+
+    #[tokio::test]
+    async fn oauth_401_returns_auth_rejected() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/api/oauth/usage"))
+            .respond_with(ResponseTemplate::new(401).set_body_string("expired"))
+            .mount(&server)
+            .await;
+
+        let err = ClaudeSource::with_base_url(server.uri())
+            .fetch_oauth("tok")
+            .await
+            .unwrap_err();
+        assert!(matches!(err, SourceError::AuthRejected(_)), "got {err:?}");
     }
 
     #[tokio::test]

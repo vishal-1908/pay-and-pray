@@ -7,14 +7,14 @@ import { CopilotAuthCard } from './components/onboarding/CopilotAuthCard';
 import { ServiceAuthCard } from './components/onboarding/ServiceAuthCard';
 import { ClaudeIcon, CodexIcon } from './components/onboarding/icons';
 import { Button } from './components/ui/Button';
-import { startClaudeSignin } from './lib/ipc';
+import { connectClaudeCode, startClaudeSignin } from './lib/ipc';
 import { useFitWindowHeight } from './lib/useFitWindow';
 
 type ClaudePhase = 'idle' | 'pending' | 'error';
 
 // Full-window auth-method picker.
-// Claude has a one-click sign-in (embedded webview) with a paste-session-key
-// fallback under "Advanced". Copilot is a one-step token paste — the
+// Claude connects through Claude Code's own login (no browser window), with an
+// embedded-webview sign-in and a paste-session-key fallback under "Advanced". Copilot is a one-step token paste — the
 // copilot_internal/user endpoint reads quota from any GitHub token.
 export default function OnboardingFlow() {
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -38,14 +38,17 @@ export default function OnboardingFlow() {
     };
   }, []);
 
-  function signInClaude() {
+  function runClaudeSignin(start: () => Promise<void>) {
     setClaudePhase('pending');
     setClaudeError('');
-    startClaudeSignin().catch((e) => {
+    start().catch((e) => {
       setClaudeError(e instanceof Error ? e.message : String(e));
       setClaudePhase('error');
     });
   }
+
+  const connectClaude = () => runClaudeSignin(connectClaudeCode);
+  const signInClaudeWindow = () => runClaudeSignin(startClaudeSignin);
 
   function finish() {
     // Nudge an immediate poll so freshly-saved credentials are picked up;
@@ -65,27 +68,35 @@ export default function OnboardingFlow() {
         <ServiceAuthCard
           icon={<ClaudeIcon />}
           name="Claude"
-          primaryLabel="Sign in with Claude"
-          advancedLabel="Paste a session key"
-          onPrimary={signInClaude}
+          primaryLabel="Use Claude Code login"
+          advancedLabel="Other ways to sign in"
+          onPrimary={connectClaude}
           extra={
             claudePhase !== 'idle' && (
               <div className="mb-2 rounded-[6px] border-hairline border-default bg-secondary px-3 py-2.5 text-[12px] leading-normal">
                 {claudePhase === 'pending' && (
                   <p className="text-fg-secondary">
-                    Complete sign-in in the Claude window — this card updates once connected.
+                    Connecting — approve the keychain prompt if macOS asks. If you opened the Claude
+                    window instead, finish signing in there.
                   </p>
                 )}
                 {claudePhase === 'error' && (
                   <p className="text-state-crit-text dark:text-state-crit-text-dark">
-                    Sign-in failed: {claudeError || 'unknown error'}. Try again or paste a session
-                    key below.
+                    Sign-in failed: {claudeError || 'unknown error'}. Try again or use another
+                    option below.
                   </p>
                 )}
               </div>
             )
           }
         >
+          <button
+            type="button"
+            onClick={signInClaudeWindow}
+            className="mb-3 text-[11.5px] text-fg-secondary underline hover:text-fg-primary"
+          >
+            Sign in with an embedded Claude window
+          </button>
           <ClaudePasteForm />
         </ServiceAuthCard>
 
