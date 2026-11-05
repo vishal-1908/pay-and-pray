@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -19,9 +22,9 @@ jobs:
     name: Frontend lint + typecheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -43,7 +46,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
@@ -57,11 +60,11 @@ jobs:
             libssl-dev \
             patchelf
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           components: rustfmt, clippy
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           workspaces: src-tauri
 
@@ -90,18 +93,18 @@ jobs:
           - { name: windows-x64, os: windows-latest, target: x86_64-pc-windows-msvc }
     runs-on: ${{ matrix.platform.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           targets: ${{ matrix.platform.target }}
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           workspaces: src-tauri
           key: ${{ matrix.platform.target }}
@@ -122,13 +125,17 @@ jobs:
 
       - name: Build
         env:
-          # createUpdaterArtifacts is on, so `tauri build` signs the updater
-          # bundles and fails without the key — same secret release.yml uses.
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: npm run tauri build -- --target ${{ matrix.platform.target }}
+          # createUpdaterArtifacts is on, so `tauri build` needs a signing key.
+          # CI builds are never shipped, so use a throwaway key generated below
+          # instead of exposing the real release key to PR-triggered builds.
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        shell: bash
+        run: |
+          npx tauri signer generate --ci -w "$RUNNER_TEMP/ci.key"
+          export TAURI_SIGNING_PRIVATE_KEY="$(cat "$RUNNER_TEMP/ci.key")"
+          npm run tauri build -- --target ${{ matrix.platform.target }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pay-and-pray-${{ matrix.platform.name }}
           path: |
