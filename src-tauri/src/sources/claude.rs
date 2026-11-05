@@ -24,6 +24,9 @@ pub struct ClaudeSource {
     client: Client,
     base_url: String,
     oauth_base_url: String,
+    /// Claude Code's OAuth token, cached so the keychain (and its macOS access
+    /// prompt) isn't hit on every poll. Dropped when the API rejects it.
+    oauth_token: std::sync::Mutex<Option<String>>,
 }
 
 impl Default for ClaudeSource {
@@ -37,6 +40,7 @@ impl Default for ClaudeSource {
             client,
             base_url: DEFAULT_BASE_URL.to_string(),
             oauth_base_url: DEFAULT_OAUTH_BASE_URL.to_string(),
+            oauth_token: Default::default(),
         }
     }
 }
@@ -54,8 +58,39 @@ impl ClaudeSource {
         Self {
             client,
             oauth_base_url: base_url.clone(),
+            oauth_token: Default::default(),
             base_url,
         }
+    }
+
+    /// Poll via Claude Code's login. Reads the keychain on a blocking thread (the
+    /// macOS prompt can wait on the user) only when no token is cached; a rejected
+    /// token is dropped and re-read once, since Claude Code may have refreshed it.
+    async fn fetch_via_claude_code(&self) -> Option<ServiceStatus> {
+        for attempt in 0..2 {
+            let cached = self.oauth_token.lock().ok()?.clone();
+            let token = match cached {
+                Some(t) => t,
+                None => {
+                    let t = tokio::task::spawn_blocking(|| Credentials::new().claude_code_token())
+                        .await
+                        .ok()??;
+                    *self.oauth_token.lock().ok()? = Some(t.clone());
+                    t
+                }
+            };
+            match self.fetch_oauth(&token).await {
+                Ok(status) => return Some(status),
+                Err(SourceError::AuthRejected(_)) if attempt == 0 => {
+                    *self.oauth_token.lock().ok()? = None;
+                }
+                Err(e) => {
+                    warn!(?e, "claude oauth fetch failed");
+                    return None;
+                }
+            }
+        }
+        None
     }
 
     /// Fetch usage with Claude Code's OAuth bearer token — the same scoped login
@@ -218,12 +253,9 @@ impl QuotaSource for ClaudeSource {
         // Prefer Claude Code's own OAuth login when the user opted in; fall back
         // to a stored session cookie if it's missing, expired or rejected.
         if creds.claude_oauth_enabled() {
-            match creds.claude_code_token() {
-                Some(token) => match self.fetch_oauth(&token).await {
-                    Ok(status) => return Ok(status),
-                    Err(e) => warn!(?e, "claude oauth fetch failed; trying session cookie"),
-                },
-                None => warn!("claude code token unavailable; trying session cookie"),
+            match self.fetch_via_claude_code().await {
+                Some(status) => return Ok(status),
+                None => warn!("claude code login unavailable; trying session cookie"),
             }
         }
 
