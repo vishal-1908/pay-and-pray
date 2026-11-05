@@ -9,8 +9,8 @@
 use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 
-const RELEASES_API: &str = "https://api.github.com/repos/allandecastro/headroom/releases/latest";
-pub const RELEASES_PAGE: &str = "https://github.com/allandecastro/headroom/releases/latest";
+const RELEASES_API: &str = "https://api.github.com/repos/vishal-1908/pay-and-pray/releases/latest";
+pub const RELEASES_PAGE: &str = "https://github.com/vishal-1908/pay-and-pray/releases/latest";
 
 /// The running version, from `Cargo.toml` at build time (e.g. "1.2.1").
 pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -50,7 +50,7 @@ impl UpdateChecker {
     fn build(api_url: String) -> Self {
         let client = Client::builder()
             // GitHub's API rejects requests without a User-Agent.
-            .user_agent(concat!("Headroom/", env!("CARGO_PKG_VERSION")))
+            .user_agent(concat!("Pay and Pray/", env!("CARGO_PKG_VERSION")))
             .timeout(std::time::Duration::from_secs(10))
             .build()
             .expect("reqwest client builds");

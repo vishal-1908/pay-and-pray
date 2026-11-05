@@ -79,7 +79,7 @@ fn plan_alerts(
                     service.name.clone()
                 };
                 alerts.push(Alert {
-                    title: "Headroom".to_string(),
+                    title: "Pay and Pray".to_string(),
                     body: format!("{marker} {level}: {who} · {} at {:.0}%", quota.label, pct),
                 });
                 notified.insert(key, crossed);

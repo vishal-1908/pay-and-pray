@@ -104,12 +104,12 @@ export function openSettings(): Promise<void> {
   return invoke('open_settings');
 }
 
-/** Whether Headroom launches at login. */
+/** Whether Pay and Pray launches at login. */
 export function getAutostart(): Promise<boolean> {
   return invoke('get_autostart');
 }
 
-/** Enable/disable launching Headroom at login. */
+/** Enable/disable launching Pay and Pray at login. */
 export function setAutostart(enabled: boolean): Promise<void> {
   return invoke('set_autostart', { enabled });
 }

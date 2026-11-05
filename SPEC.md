@@ -1,18 +1,18 @@
 # SPEC
 
-Technical specification for Headroom v1.
+Technical specification for Pay and Pray v1.
 
 ## Goals
 
 1. Show, at a glance from the menu bar, the worst remaining quota across watched AI coding services.
 2. Open in a click to a detailed popover with each window's percentage and reset time.
 3. Project, via a 7-day burndown, whether the user will hit the weekly cap before reset.
-4. Require zero credential paste in the default flow — sign in normally, Headroom handles the rest.
+4. Require zero credential paste in the default flow — sign in normally, Pay and Pray handles the rest.
 
 ## Non-goals (v1)
 
-- Multi-account support (one Claude account, one GitHub account per Headroom install).
-- Team/org rollups (Headroom is a personal tool, not a billing dashboard).
+- Multi-account support (one Claude account, one GitHub account per Pay and Pray install).
+- Team/org rollups (Pay and Pray is a personal tool, not a billing dashboard).
 - Cursor / Gemini / Perplexity integration (planned — open an issue if you'd build the adapter). **OpenAI Codex now ships** — see [Data sources](#data-sources).
 - Notifications beyond local desktop alerts (no Slack/Discord webhooks in v1).
 - Web sync of usage history.
@@ -113,7 +113,7 @@ Under token-based billing the `premium_interactions` quota is the **AI Credits**
 
 ### OpenAI Codex
 
-Codex is **local-first and needs no sign-in** — Headroom reads it two ways, preferring the first:
+Codex is **local-first and needs no sign-in** — Pay and Pray reads it two ways, preferring the first:
 
 **1. Active query** (fresh; works even for exec-mode usage):
 
@@ -123,7 +123,7 @@ Authorization: Bearer {access_token}
 ChatGPT-Account-Id: {account_id}
 ```
 
-This is Codex's own zero-cost rate-limit endpoint (no model turn is consumed). The `access_token` and `account_id` come from the token the Codex CLI already stores in `~/.codex/auth.json` (`CODEX_HOME` overrides the path); the account id and plan tier are read from `tokens.account_id` or decoded from the `id_token` JWT (`chatgpt_account_id` / `chatgpt_plan_type`). Headroom only **reads** `auth.json` — it never refreshes or rewrites it, to avoid racing the CLI. The URL path mirrors Codex's own `PathStyle` (`/wham/usage` for the ChatGPT backend, `/api/codex/usage` for a bare Codex API host). Gated by the `codex_live_query` setting (default on).
+This is Codex's own zero-cost rate-limit endpoint (no model turn is consumed). The `access_token` and `account_id` come from the token the Codex CLI already stores in `~/.codex/auth.json` (`CODEX_HOME` overrides the path); the account id and plan tier are read from `tokens.account_id` or decoded from the `id_token` JWT (`chatgpt_account_id` / `chatgpt_plan_type`). Pay and Pray only **reads** `auth.json` — it never refreshes or rewrites it, to avoid racing the CLI. The URL path mirrors Codex's own `PathStyle` (`/wham/usage` for the ChatGPT backend, `/api/codex/usage` for a bare Codex API host). Gated by the `codex_live_query` setting (default on).
 
 **Response shape:**
 
@@ -140,11 +140,11 @@ This is Codex's own zero-cost rate-limit endpoint (no model turn is consumed). T
 
 **2. Local rollout logs** (fallback; also the source of the token-consumption stats):
 
-`~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`. Each `token_count` event may carry a `rate_limits` snapshot (`primary` / `secondary` with `used_percent`, `resets_at`) plus cumulative `total_token_usage` (input / cached / output / reasoning tokens). Headroom scans the newest files for the most recent **non-null** snapshot — exec-mode sessions log `rate_limits: null` ([openai/codex#14728](https://github.com/openai/codex/issues/14728)), so only interactive `codex` sessions populate it. A snapshot whose window already reset is re-based and flagged "may be stale". Token stats are summed over the last 24 h regardless of mode.
+`~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`. Each `token_count` event may carry a `rate_limits` snapshot (`primary` / `secondary` with `used_percent`, `resets_at`) plus cumulative `total_token_usage` (input / cached / output / reasoning tokens). Pay and Pray scans the newest files for the most recent **non-null** snapshot — exec-mode sessions log `rate_limits: null` ([openai/codex#14728](https://github.com/openai/codex/issues/14728)), so only interactive `codex` sessions populate it. A snapshot whose window already reset is re-based and flagged "may be stale". Token stats are summed over the last 24 h regardless of mode.
 
 When `~/.codex` is absent the source reports `NeedsSetup` (the popover hides it). When it exists but no rate-limit snapshot is available yet, the card shows guidance ("run an interactive `codex` session") plus any token stats. Both endpoints are undocumented and may change; parsing is defensive and degrades to that guidance rather than a blank card.
 
-**Machine scope.** Both reads are local to the host Headroom runs on, but they differ across machines. The live endpoint returns **account-wide** rate limits (enforced server-side per ChatGPT account), so percentages are accurate even when the work ran on another device — provided a signed-in `~/.codex` exists locally to supply the token. The rollout-log token stats are **host-local**: they only ever reflect `codex` sessions run on this machine, and there is no remote source for cumulative token history.
+**Machine scope.** Both reads are local to the host Pay and Pray runs on, but they differ across machines. The live endpoint returns **account-wide** rate limits (enforced server-side per ChatGPT account), so percentages are accurate even when the work ran on another device — provided a signed-in `~/.codex` exists locally to supply the token. The rollout-log token stats are **host-local**: they only ever reflect `codex` sessions run on this machine, and there is no remote source for cumulative token history.
 
 ---
 
@@ -157,10 +157,10 @@ Each source supports a primary "magic" path and a fallback paste path. Both path
 ### Claude — primary: embedded webview
 
 1. User clicks "Sign in with Claude" in onboarding.
-2. Headroom opens a Tauri `WebviewWindow` pointing at `https://claude.ai/login`.
+2. Pay and Pray opens a Tauri `WebviewWindow` pointing at `https://claude.ai/login`.
 3. User authenticates normally (password / Google SSO / magic link).
-4. After redirect to `claude.ai`, Headroom reads `sessionKey` via `webview.cookies_for_url("https://claude.ai".parse()?)`.
-5. Cookie is written to the keychain under service `headroom`, account `claude.session`.
+4. After redirect to `claude.ai`, Pay and Pray reads `sessionKey` via `webview.cookies_for_url("https://claude.ai".parse()?)`.
+5. Cookie is written to the keychain under service `pay-and-pray`, account `claude.session`.
 6. The webview closes.
 
 ### Claude — fallback: paste session key
@@ -171,7 +171,7 @@ For users who can't run a webview (some Linux distros without webkit2gtk, or air
 
 1. User clicks "Sign in with GitHub" in onboarding.
 2. `start_copilot_signin` POSTs to `github.com/login/device/code` with the public OAuth App `client_id` (device flow needs no secret, so the id ships in the app and is shared by every install) and scope `read:user`.
-3. Headroom shows the returned `user_code` (with a copy button) and opens `verification_uri`; the onboarding window is pinned on top so it isn't lost behind the browser.
+3. Pay and Pray shows the returned `user_code` (with a copy button) and opens `verification_uri`; the onboarding window is pinned on top so it isn't lost behind the browser.
 4. The backend polls `github.com/login/oauth/access_token` (`grant_type=…device_code`), honoring `authorization_pending` / `slow_down`, until GitHub mints a user token.
 5. The token is written to the keychain under `copilot.token` and `copilot-signed-in` is emitted (or `copilot-signin-error` with a message). The OAuth App must have **device flow enabled**.
 
@@ -181,7 +181,7 @@ Under "Advanced", the user can paste any GitHub personal access token (classic o
 
 ### Codex — no sign-in (local)
 
-Codex has no auth step in Headroom. The Codex CLI already stores its ChatGPT token in `~/.codex/auth.json`; Headroom reads it (read-only) for the live usage query and otherwise falls back to the local rollout logs, which need no token at all. There is nothing to paste and nothing stored in the keychain — see [Data sources / OpenAI Codex](#openai-codex). The onboarding card is informational only.
+Codex has no auth step in Pay and Pray. The Codex CLI already stores its ChatGPT token in `~/.codex/auth.json`; Pay and Pray reads it (read-only) for the live usage query and otherwise falls back to the local rollout logs, which need no token at all. There is nothing to paste and nothing stored in the keychain — see [Data sources / OpenAI Codex](#openai-codex). The onboarding card is informational only.
 
 ---
 
@@ -223,7 +223,7 @@ A source that has no stored credentials returns `SourceError::MissingCredentials
 
 ### `credentials`
 
-Thin wrapper around the `keyring` crate. All values stored under service name `headroom`. Keys:
+Thin wrapper around the `keyring` crate. All values stored under service name `pay-and-pray`. Keys:
 
 - `claude.session` — the `sessionKey` cookie value
 - `claude.orgId` — cached organization UUID
@@ -269,13 +269,13 @@ Usage history is recorded here too: each active quota's utilization is sampled i
 
 ### `updates`
 
-Update **detection** is GitHub-API based. `UpdateChecker::check()` queries `GET https://api.github.com/repos/allandecastro/headroom/releases/latest` (public, no token; a User-Agent is required) and compares the `tag_name` to the compile-time `CARGO_PKG_VERSION` via a `major.minor.patch` semver compare (`is_newer`, tolerant of a `v` prefix and pre-release suffixes). Returns `UpdateInfo { version, url }` when the remote is strictly newer, else `None`; drafts/prereleases are ignored. Surfaced to the renderer through the `get_update` / `check_for_update_now` IPC commands and the `update-available` event.
+Update **detection** is GitHub-API based. `UpdateChecker::check()` queries `GET https://api.github.com/repos/vishal-1908/pay-and-pray/releases/latest` (public, no token; a User-Agent is required) and compares the `tag_name` to the compile-time `CARGO_PKG_VERSION` via a `major.minor.patch` semver compare (`is_newer`, tolerant of a `v` prefix and pre-release suffixes). Returns `UpdateInfo { version, url }` when the remote is strictly newer, else `None`; drafts/prereleases are ignored. Surfaced to the renderer through the `get_update` / `check_for_update_now` IPC commands and the `update-available` event.
 
 Update **install** ("Update now") is handled by the `install_update` command (`commands.rs`) on top of `tauri-plugin-updater`: it downloads the signed artifact described by the release's `latest.json`, installs it, emits `update-progress` for the UI, and `app.restart()`s into the new version. Artifacts are signed with a minisign key (`tauri signer generate`); the public key lives in `tauri.conf.json` (`plugins.updater.pubkey`), the private key + password are CI secrets (`TAURI_SIGNING_PRIVATE_KEY[_PASSWORD]`), and `bundle.createUpdaterArtifacts` is on. The release workflow's `updater-manifest` job merges the matrix's per-platform `latest.json` files into one manifest (Windows + Linux AppImage entries). Self-install is gated to platforms that support it — **Windows (MSI)** and **Linux AppImage**; **macOS** (notarized signing still deferred) and **Linux `.deb`** fall back to opening the release page, the old manual flow. Auto-install works only *from* the first release that ships the plugin onward.
 
 ### `tray`
 
-Tray icon state machine. Four image variants (`ok`, `warn`, `crit`, `unreachable`) drive colour from the worst quota. On macOS the worst percentage is shown next to the icon via the native `set_title` API; on Windows it is shown in the hover **tooltip** ("Headroom — N% used"), since Windows has no tray title. A single left-click (matched on button **release**) toggles the popover; the right-click menu offers Open / Set up accounts… / Settings… / Quit. The tray is built **once**, in code (`TrayIconBuilder`) — `tauri.conf.json` must **not** also declare a `trayIcon`, or two icons appear.
+Tray icon state machine. Four image variants (`ok`, `warn`, `crit`, `unreachable`) drive colour from the worst quota. On macOS the worst percentage is shown next to the icon via the native `set_title` API; on Windows it is shown in the hover **tooltip** ("Pay and Pray — N% used"), since Windows has no tray title. A single left-click (matched on button **release**) toggles the popover; the right-click menu offers Open / Set up accounts… / Settings… / Quit. The tray is built **once**, in code (`TrayIconBuilder`) — `tauri.conf.json` must **not** also declare a `trayIcon`, or two icons appear.
 
 ---
 
@@ -318,7 +318,7 @@ The renderer displays the current state per service (Rust enum `ServiceState`: `
 
 Two configurable thresholds drive local desktop notifications: a **warning** (orange) and a **critical** (red), each a percentage where `0` means off and critical takes precedence. On every poll, each active quota's percentage is checked via `crossed_threshold()`; the first time it crosses an enabled threshold, one notification fires ("Heads up" / "Critical", with the service, quota label, and percentage). The crossing is recorded per `service:quota` so it does not re-fire, and re-arms once the quota drops back below both thresholds.
 
-> On Windows, toast notifications are attributed to the process's registered AppUserModelID. A correctly **installed** build (MSI/NSIS, which creates a Start Menu shortcut) shows "Headroom"; a loose `.exe` launched from a shell inherits that shell's identity instead.
+> On Windows, toast notifications are attributed to the process's registered AppUserModelID. A correctly **installed** build (MSI/NSIS, which creates a Start Menu shortcut) shows "Pay and Pray"; a loose `.exe` launched from a shell inherits that shell's identity instead.
 
 ---
 
@@ -326,10 +326,10 @@ Two configurable thresholds drive local desktop notifications: a **warning** (or
 
 | What             | Where                                       | Format | Status      |
 | ---------------- | ------------------------------------------- | ------ | ----------- |
-| Credentials      | OS keychain (service `headroom`)            | string | implemented |
-| User preferences | `dirs::config_dir()/headroom/settings.json` | JSON   | implemented |
+| Credentials      | OS keychain (service `pay-and-pray`)            | string | implemented |
+| User preferences | `dirs::config_dir()/pay-and-pray/settings.json` | JSON   | implemented |
 | Cached snapshots | in-memory only (`last_snapshot`)            | n/a    | implemented |
-| Usage history    | `dirs::data_dir()/headroom/history.jsonl`   | JSONL  | implemented |
+| Usage history    | `dirs::data_dir()/pay-and-pray/history.jsonl`   | JSONL  | implemented |
 
 **Settings** (`settings.json`, written atomically and clamped on load): `poll_interval_secs`, `theme` (`auto`/`light`/`dark`), `show_tray_percentage`, `notify_warn_pct` (orange, 0 = off), `notify_crit_pct` (red, 0 = off), `show_claude_design`, `codex_live_query` (query Codex's usage endpoint vs. read its local logs only). Launch-at-login is managed by `tauri-plugin-autostart`, not stored here. Saving settings emits `settings-updated` so open windows react live (theme, Claude Design toggle).
 

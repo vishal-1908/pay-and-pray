@@ -1,4 +1,4 @@
-//! Headroom — menu bar quota meter.
+//! Pay and Pray — menu bar quota meter.
 //!
 //! See SPEC.md at the project root for the full architecture.
 
@@ -61,7 +61,7 @@ pub fn run() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "headroom=info,warn".into()),
+                .unwrap_or_else(|_| "pay_and_pray=info,warn".into()),
         )
         .init();
 

@@ -1,4 +1,4 @@
-//! User preferences, persisted as JSON at `config_dir()/headroom/settings.json`.
+//! User preferences, persisted as JSON at `config_dir()/pay-and-pray/settings.json`.
 //!
 //! Writes are atomic (temp file + rename). A missing or unreadable file yields
 //! [`Settings::default`]. The shape is mirrored by the `Settings` interface in
@@ -27,7 +27,7 @@ pub struct Settings {
     #[serde(default = "default_true")]
     pub check_updates: bool,
     /// Query Codex's own `/codex/usage` endpoint for fresh rate limits, using the
-    /// token already stored by the Codex CLI in `~/.codex`. When off, Headroom
+    /// token already stored by the Codex CLI in `~/.codex`. When off, Pay and Pray
     /// reads only Codex's local rollout logs (no network). Default on.
     #[serde(default = "default_true")]
     pub codex_live_query: bool,
@@ -59,7 +59,7 @@ impl Default for Settings {
 }
 
 fn settings_path() -> Option<PathBuf> {
-    dirs::config_dir().map(|d| d.join("headroom").join("settings.json"))
+    dirs::config_dir().map(|d| d.join("pay-and-pray").join("settings.json"))
 }
 
 impl Settings {

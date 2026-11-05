@@ -1,4 +1,4 @@
-// Screenshot harness — renders the real Headroom UI with canned data so the
+// Screenshot harness — renders the real Pay and Pray UI with canned data so the
 // capture script (capture.mjs) can produce deterministic README screenshots
 // without the Tauri backend. Two kinds of state:
 //   - card states  → a single popover card (TokenCard), wrapped in #shot

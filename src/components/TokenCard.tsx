@@ -203,7 +203,7 @@ function formatAgo(iso: string): string {
 }
 
 // Shown when a service is active but has no metered quota row to draw — an
-// unlimited plan, or a payload shape Headroom couldn't classify (e.g. the new
+// unlimited plan, or a payload shape Pay and Pray couldn't classify (e.g. the new
 // AI-Credits object under an id we don't recognize yet). Never a silent blank.
 function EmptyUsage({ usage, accountId }: { usage?: CopilotUsage; accountId?: string }) {
   const [copyState, setCopyState] = useState<'idle' | 'copying' | 'done' | 'error'>('idle');
@@ -453,7 +453,7 @@ function errorCopy(
   // Network error, timeout, Cloudflare challenge, unparseable response.
   return {
     summary: "Couldn't reach GitHub — check your connection",
-    hint: 'Headroom will retry on the next refresh.',
+    hint: 'Pay and Pray will retry on the next refresh.',
   };
 }
 

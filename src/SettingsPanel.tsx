@@ -11,7 +11,7 @@ import { SegmentedControl } from './components/ui/SegmentedControl';
 import { Toggle } from './components/ui/Toggle';
 import { Slider } from './components/ui/Slider';
 import { Button } from './components/ui/Button';
-import { ClaudeIcon, GitHubIcon, LinkedInIcon, CodexIcon } from './components/onboarding/icons';
+import { ClaudeIcon, GitHubIcon, CodexIcon } from './components/onboarding/icons';
 import {
   getSettings,
   setSettings,
@@ -72,8 +72,7 @@ function openUrl(url: string): void {
   open(url).catch(console.error);
 }
 
-const GITHUB_URL = 'https://github.com/allandecastro/headroom';
-const LINKEDIN_URL = 'https://www.linkedin.com/in/allandecastro/';
+const GITHUB_URL = 'https://github.com/vishal-1908/pay-and-pray';
 
 // ─── Connected pill ──────────────────────────────────────────────────────────
 
@@ -580,7 +579,7 @@ export default function SettingsPanel() {
             <div className="flex flex-col flex-1">
               <span className="text-[12px] text-fg-secondary">Refresh interval</span>
               <span className="text-[10.5px] text-fg-quaternary mt-0.5">
-                How often Headroom polls each service
+                How often Pay and Pray polls each service
               </span>
             </div>
             <SegmentedControl
@@ -695,7 +694,7 @@ export default function SettingsPanel() {
         <Group label="About">
           <Row>
             <div className="flex flex-1 flex-col">
-              <span className="text-[12px] text-fg-secondary">Headroom · v{appVersion}</span>
+              <span className="text-[12px] text-fg-secondary">Pay and Pray · v{appVersion}</span>
               <span className="mt-0.5 text-[10.5px] text-fg-quaternary">
                 Know your headroom — quota meter for Claude & GitHub Copilot
               </span>
@@ -748,7 +747,9 @@ export default function SettingsPanel() {
             />
           </Row>
           <Row>
-            <span className="flex-1 text-[12px] text-fg-secondary">Made by Allan De Castro</span>
+            <span className="flex-1 text-[12px] text-fg-secondary">
+              Forked by Vishal Singh · original by Allan De Castro
+            </span>
             <div className="flex items-center gap-3 text-fg-tertiary">
               <button
                 aria-label="GitHub repository"
@@ -756,13 +757,6 @@ export default function SettingsPanel() {
                 className="hover:text-fg-primary"
               >
                 <GitHubIcon />
-              </button>
-              <button
-                aria-label="LinkedIn — Allan De Castro"
-                onClick={() => openUrl(LINKEDIN_URL)}
-                className="hover:text-fg-primary"
-              >
-                <LinkedInIcon />
               </button>
             </div>
           </Row>

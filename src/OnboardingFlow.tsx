@@ -59,7 +59,7 @@ export default function OnboardingFlow() {
       <div ref={bodyRef} className="px-6 pt-6 pb-5">
         <h1 className="mb-1 text-[17px] font-medium tracking-[-0.01em]">Connect your services</h1>
         <p className="mb-[18px] text-[12px] leading-normal text-fg-tertiary">
-          Headroom stores credentials in your OS keychain — nothing leaves your computer.
+          Pay and Pray stores credentials in your OS keychain — nothing leaves your computer.
         </p>
 
         <ServiceAuthCard
@@ -94,7 +94,7 @@ export default function OnboardingFlow() {
         <ServiceAuthCard icon={<CodexIcon />} name="Codex">
           <div className="text-[12px] leading-normal text-fg-tertiary">
             <p className="mb-2">
-              No sign-in needed. Headroom reads Codex usage from{' '}
+              No sign-in needed. Pay and Pray reads Codex usage from{' '}
               <code className="rounded bg-black/[0.06] px-1 dark:bg-white/[0.08]">~/.codex</code> —
               and, when you’re signed in to ChatGPT in Codex, queries Codex’s own usage endpoint
               with the token already stored there. Nothing else leaves your computer.

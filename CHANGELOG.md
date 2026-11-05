@@ -1,8 +1,12 @@
 # Changelog
 
-All notable changes to Headroom are recorded here. The format follows
+All notable changes to Pay and Pray are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+Entries up to 1.6.0 come from the upstream project,
+[allandecastro/headroom](https://github.com/allandecastro/headroom); their
+PR and issue links point there.
 
 ## [Unreleased]
 

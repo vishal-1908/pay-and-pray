@@ -29,13 +29,13 @@ jobs:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           body: |
-            See [CHANGELOG.md](https://github.com/allandecastro/headroom/blob/main/CHANGELOG.md) for the human-written release notes.
+            See [CHANGELOG.md](https://github.com/vishal-1908/pay-and-pray/blob/main/CHANGELOG.md) for the human-written release notes.
 
             **Downloads:**
-            - macOS (Apple Silicon): `Headroom_*_aarch64.dmg`
-            - Windows: `Headroom_*_x64_en-US.msi`
-            - Linux AppImage: `Headroom_*_amd64.AppImage`
-            - Linux Debian: `headroom_*_amd64.deb`
+            - macOS (Apple Silicon): `Pay.and.Pray_*_aarch64.dmg`
+            - Windows: `Pay.and.Pray_*_x64_en-US.msi`
+            - Linux AppImage: `Pay.and.Pray_*_amd64.AppImage`
+            - Linux Debian: `pay-and-pray_*_amd64.deb`
 
   build:
     name: Build ${{ matrix.platform.name }}
@@ -83,6 +83,9 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Public OAuth App client id for Copilot device-flow sign-in
+          # (compiled in via option_env!). Set as a repo variable.
+          PAY_AND_PRAY_GITHUB_CLIENT_ID: ${{ vars.PAY_AND_PRAY_GITHUB_CLIENT_ID }}
           # Updater signing — required for tauri-plugin-updater to accept the
           # downloaded artifact. Generate with `tauri signer generate`; the
           # public key lives in tauri.conf.json (plugins.updater.pubkey).

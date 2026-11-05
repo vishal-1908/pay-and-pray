@@ -1,10 +1,10 @@
 # Design System
 
-The visual language for Headroom. Every screen, icon, and component in the app should be reducible to a decision made on this page.
+The visual language for Pay and Pray. Every screen, icon, and component in the app should be reducible to a decision made on this page.
 
 ## Philosophy
 
-**Refined minimal.** Headroom is a utility that sits in your menu bar — it competes for attention with notifications, dock, wallpaper, and the rest of the OS chrome. The right answer is to be unobtrusive when nothing's wrong and unambiguously clear when something is. No gradients, no shadows, no decorative chrome. Whitespace and typography do the work.
+**Refined minimal.** Pay and Pray is a utility that sits in your menu bar — it competes for attention with notifications, dock, wallpaper, and the rest of the OS chrome. The right answer is to be unobtrusive when nothing's wrong and unambiguously clear when something is. No gradients, no shadows, no decorative chrome. Whitespace and typography do the work.
 
 **Native vibrancy, not fake glass.** The popover is translucent because Tauri exposes the OS-level vibrancy effect (macOS `NSVisualEffectView`, Windows 11 Mica). We do not simulate this in CSS with backdrop-filter — that's pretending to be native and looking worse than the real thing. On Linux without a compositor that supports blur, we use a near-opaque solid as the honest fallback.
 
@@ -236,7 +236,7 @@ On Linux without a blur-capable compositor, the popover falls back to a near-opa
 
 ## Mode switching
 
-Headroom respects the OS theme by default. Manual override available in Settings (Auto / Light / Dark). The mode token is exposed to the renderer via a CSS class on `<html>` and the React tree subscribes via a `useColorScheme()` hook.
+Pay and Pray respects the OS theme by default. Manual override available in Settings (Auto / Light / Dark). The mode token is exposed to the renderer via a CSS class on `<html>` and the React tree subscribes via a `useColorScheme()` hook.
 
 When transitioning, no animation — both modes are pre-styled and the switch is instantaneous.
 

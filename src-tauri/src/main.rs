@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    headroom_lib::run()
+    pay_and_pray_lib::run()
 }

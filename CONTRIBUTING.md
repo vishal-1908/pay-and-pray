@@ -1,12 +1,12 @@
 # Contributing
 
-Thanks for considering a contribution. Headroom is small enough that the contribution surface is mostly bug reports, design tweaks, and adding new quota sources. Here's how to do each.
+Thanks for considering a contribution. Pay and Pray is small enough that the contribution surface is mostly bug reports, design tweaks, and adding new quota sources. Here's how to do each.
 
 ## Quick setup
 
 ```bash
-git clone https://github.com/USER/headroom.git
-cd headroom
+git clone https://github.com/USER/pay-and-pray.git
+cd pay-and-pray
 npm install
 npm run tauri dev
 ```
@@ -80,10 +80,10 @@ Tests should cover at minimum: a successful fetch with a recorded response, an a
 GitHub Issues. Include:
 
 - OS and version (`uname -a` / `winver` / `cat /etc/os-release`)
-- Headroom version (Settings → About, or `headroom --version` on CLI builds)
+- Pay and Pray version (Settings → About, or `pay-and-pray --version` on CLI builds)
 - What you expected
 - What you saw instead
-- Logs from `~/.local/share/headroom/headroom.log` (or platform equivalent), specifically the last 50 lines around the issue
+- Logs from `~/.local/share/pay-and-pray/pay-and-pray.log` (or platform equivalent), specifically the last 50 lines around the issue
 
 Security issues: do **not** open a public issue. Email the maintainer (address in `CODEOWNERS`).
 

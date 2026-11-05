@@ -125,7 +125,7 @@ impl Default for CopilotSource {
 impl CopilotSource {
     fn build(base_url: String) -> Self {
         let client = Client::builder()
-            .user_agent("Headroom/0.1")
+            .user_agent("Pay and Pray/0.1")
             .timeout(std::time::Duration::from_secs(10))
             .build()
             .expect("reqwest client builds");

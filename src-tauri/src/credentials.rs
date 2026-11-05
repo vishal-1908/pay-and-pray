@@ -1,6 +1,6 @@
 //! Credentials wrapper around the OS keychain.
 //!
-//! All values live under the service name `headroom`. Per-account keys:
+//! All values live under the service name `pay-and-pray`. Per-account keys:
 //!
 //! - `claude.session`   — the `sessionKey` cookie value
 //! - `claude.orgId`     — cached Claude organization UUID
@@ -21,7 +21,7 @@ use keyring::Entry;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 
-const SERVICE: &str = "headroom";
+const SERVICE: &str = "pay-and-pray";
 const COPILOT_ACCOUNTS_KEY: &str = "copilot.accounts";
 
 /// A connected GitHub Copilot account. `id` is the GitHub user id (stable across

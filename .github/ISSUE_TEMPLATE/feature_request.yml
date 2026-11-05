@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before filing: check [FAQ § Scope](https://github.com/allandecastro/headroom/blob/main/FAQ.md#scope) — a few things are explicitly out of scope (CLI, "bring your own API" generic source, web sync, team rollups) and won't be considered.
+        Before filing: check [FAQ § Scope](https://github.com/vishal-1908/pay-and-pray/blob/main/FAQ.md#scope) — a few things are explicitly out of scope (CLI, "bring your own API" generic source, web sync, team rollups) and won't be considered.
 
   - type: textarea
     id: problem
@@ -20,7 +20,7 @@ body:
     id: proposed
     attributes:
       label: Proposed solution
-      description: How should Headroom address it? Be concrete — UI changes, new IPC commands, new source adapter, etc.
+      description: How should Pay and Pray address it? Be concrete — UI changes, new IPC commands, new source adapter, etc.
     validations:
       required: true
 
@@ -33,7 +33,7 @@ body:
   - type: dropdown
     id: scope
     attributes:
-      label: Does this fit Headroom's scope?
+      label: Does this fit Pay and Pray's scope?
       description: See ROADMAP's "Explicit non-goals" section before answering.
       options:
         - Yes — extends existing functionality
@@ -47,7 +47,7 @@ body:
     attributes:
       label: Checklist
       options:
-        - label: I searched [existing issues](https://github.com/allandecastro/headroom/issues?q=is%3Aissue) and didn't find a duplicate.
+        - label: I searched [existing issues](https://github.com/vishal-1908/pay-and-pray/issues?q=is%3Aissue) and didn't find a duplicate.
           required: true
-        - label: I read [FAQ § Scope](https://github.com/allandecastro/headroom/blob/main/FAQ.md#scope) and this isn't explicitly excluded.
+        - label: I read [FAQ § Scope](https://github.com/vishal-1908/pay-and-pray/blob/main/FAQ.md#scope) and this isn't explicitly excluded.
           required: true

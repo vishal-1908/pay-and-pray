@@ -11,7 +11,7 @@ export function BrandMark({ size = 24, className }: Props) {
       viewBox="0 0 64 64"
       fill="currentColor"
       role="img"
-      aria-label="Headroom"
+      aria-label="Pay and Pray"
       className={className}
     >
       <rect x="10" y="11" width="44" height="4" rx="1" />

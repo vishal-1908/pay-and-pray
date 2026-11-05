@@ -6,12 +6,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to file a bug. Please check the [FAQ](https://github.com/allandecastro/headroom/blob/main/FAQ.md) first — common issues (tray icon hidden, "Couldn't fetch usage", notifications attributed to the wrong app, sparkline "collecting…") are covered there.
+        Thanks for taking the time to file a bug. Please check the [FAQ](https://github.com/vishal-1908/pay-and-pray/blob/main/FAQ.md) first — common issues (tray icon hidden, "Couldn't fetch usage", notifications attributed to the wrong app, sparkline "collecting…") are covered there.
 
   - type: input
     id: version
     attributes:
-      label: Headroom version
+      label: Pay and Pray version
       description: "From Settings → About, or the file name of the installer you ran."
       placeholder: "1.0.0"
     validations:
@@ -74,7 +74,7 @@ body:
     attributes:
       label: Relevant logs (optional)
       description: |
-        Run from a terminal with `RUST_LOG=headroom=debug,warn` to see debug logs.
+        Run from a terminal with `RUST_LOG=pay_and_pray=debug,warn` to see debug logs.
         **Remove any tokens, cookies, or session keys before pasting.**
       render: shell
 
@@ -89,9 +89,9 @@ body:
     attributes:
       label: Checklist
       options:
-        - label: I searched [existing issues](https://github.com/allandecastro/headroom/issues?q=is%3Aissue) and didn't find a duplicate.
+        - label: I searched [existing issues](https://github.com/vishal-1908/pay-and-pray/issues?q=is%3Aissue) and didn't find a duplicate.
           required: true
-        - label: I read the [FAQ](https://github.com/allandecastro/headroom/blob/main/FAQ.md) and this isn't already answered.
+        - label: I read the [FAQ](https://github.com/vishal-1908/pay-and-pray/blob/main/FAQ.md) and this isn't already answered.
           required: true
         - label: I removed any secrets (tokens, cookies, session keys) from logs / screenshots.
           required: true

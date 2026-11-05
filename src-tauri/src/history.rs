@@ -51,7 +51,7 @@ fn series_key(service: &str, window: QuotaWindow) -> String {
 }
 
 fn history_path() -> Option<PathBuf> {
-    dirs::data_dir().map(|d| d.join("headroom").join("history.jsonl"))
+    dirs::data_dir().map(|d| d.join("pay-and-pray").join("history.jsonl"))
 }
 
 /// In-memory series store, keyed by `service:window`.

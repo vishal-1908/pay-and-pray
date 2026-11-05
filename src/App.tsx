@@ -107,7 +107,7 @@ export default function App() {
                   <span aria-hidden className="text-state-ok-text dark:text-state-ok-text-dark">
                     ⬆
                   </span>{' '}
-                  {installError ? 'Update failed' : `Headroom v${update.version} available`}
+                  {installError ? 'Update failed' : `Pay and Pray v${update.version} available`}
                 </span>
                 <span className="flex items-center gap-2.5">
                   {installing ? (

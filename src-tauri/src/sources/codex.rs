@@ -171,10 +171,14 @@ impl CodexSource {
             });
         }
 
-        let body: UsageResponse = response
-            .json()
+        let bytes = response
+            .bytes()
             .await
-            .map_err(|e| SourceError::Parse(e.to_string()))?;
+            .map_err(|e| SourceError::Parse(format!("reading usage body: {e:?}")))?;
+        let body: UsageResponse = serde_json::from_slice(&bytes).map_err(|e| {
+            let head = String::from_utf8_lossy(&bytes[..bytes.len().min(200)]);
+            SourceError::Parse(format!("{e}; body starts: {head:?}"))
+        })?;
 
         let mut rows = Vec::new();
         if let Some(rl) = body.chosen() {
@@ -1032,7 +1036,7 @@ fn mtime(p: &Path) -> SystemTime {
 
 fn build_client() -> Client {
     Client::builder()
-        .user_agent("Headroom/0.1")
+        .user_agent("Pay and Pray/0.1")
         .timeout(std::time::Duration::from_secs(10))
         .build()
         .expect("reqwest client builds")

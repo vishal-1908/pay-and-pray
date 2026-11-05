@@ -18,10 +18,11 @@ const DEFAULT_BASE_URL: &str = "https://github.com";
 /// Minimal scope: identifies the user without granting repo/write access.
 const SCOPE: &str = "read:user";
 
-/// Public OAuth App client id (device flow needs no secret, so this is safe to
-/// ship and is shared by every install). The OAuth App must have device flow
-/// enabled.
-pub const GITHUB_CLIENT_ID: &str = "Ov23li0GQonRoripvQcM";
+/// Public OAuth App client id (device flow needs no secret, so it is safe to
+/// ship). Supplied at build time via `PAY_AND_PRAY_GITHUB_CLIENT_ID` so it is
+/// always the builder's own OAuth App (device flow enabled), never someone
+/// else's. `None` disables "Sign in with GitHub"; use the paste-token flow.
+pub const GITHUB_CLIENT_ID: Option<&str> = option_env!("PAY_AND_PRAY_GITHUB_CLIENT_ID");
 
 #[derive(Clone)]
 pub struct GithubSignin {
@@ -48,7 +49,7 @@ impl Default for GithubSignin {
 impl GithubSignin {
     fn build(base_url: String) -> Self {
         let client = Client::builder()
-            .user_agent("Headroom/0.1")
+            .user_agent("Pay and Pray/0.1")
             .timeout(Duration::from_secs(15))
             .build()
             .expect("reqwest client builds");
@@ -148,7 +149,7 @@ pub async fn resolve_identity(token: &str) -> anyhow::Result<GithubIdentity> {
 
 async fn resolve_identity_at(base_url: &str, token: &str) -> anyhow::Result<GithubIdentity> {
     let client = Client::builder()
-        .user_agent(concat!("Headroom/", env!("CARGO_PKG_VERSION")))
+        .user_agent(concat!("Pay and Pray/", env!("CARGO_PKG_VERSION")))
         .timeout(Duration::from_secs(15))
         .build()?;
     let resp = client

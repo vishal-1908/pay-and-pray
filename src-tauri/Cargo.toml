@@ -1,5 +1,5 @@
 [package]
-name = "headroom"
+name = "pay-and-pray"
 version = "1.6.0"
 description = "Menu bar quota meter for Claude Code and GitHub Copilot"
 authors = ["Allan De Castro"]
@@ -7,7 +7,7 @@ edition = "2021"
 rust-version = "1.78"
 
 [lib]
-name = "headroom_lib"
+name = "pay_and_pray_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

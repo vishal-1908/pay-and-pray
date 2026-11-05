@@ -300,9 +300,9 @@ fn notify_update(app: &AppHandle, info: &crate::updates::UpdateInfo) {
     if let Err(e) = app
         .notification()
         .builder()
-        .title("Headroom update available")
+        .title("Pay and Pray update available")
         .body(format!(
-            "Version {} is available — open Headroom to download.",
+            "Version {} is available — open Pay and Pray to download.",
             info.version
         ))
         .show()

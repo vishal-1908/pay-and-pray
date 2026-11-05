@@ -193,10 +193,10 @@ pub fn get_autostart(app: AppHandle) -> bool {
 #[tauri::command]
 pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<(), String> {
     use tauri_plugin_autostart::ManagerExt;
-    // Dev builds would register target\debug\headroom.exe — see #20.
+    // Dev builds would register target\debug\pay-and-pray.exe — see #20.
     if enabled && cfg!(debug_assertions) {
         return Err(
-            "Launch at startup can only be enabled from an installed Headroom build, \
+            "Launch at startup can only be enabled from an installed Pay and Pray build, \
              not a dev build."
                 .to_string(),
         );
@@ -313,9 +313,17 @@ pub async fn start_copilot_signin(
 ) -> Result<CopilotSigninStart, String> {
     use crate::github_signin::{GithubSignin, GITHUB_CLIENT_ID};
 
+    let client_id = GITHUB_CLIENT_ID
+        .filter(|id| !id.is_empty())
+        .ok_or_else(|| {
+            "GitHub sign-in isn't configured in this build (no OAuth client ID). \
+             Paste a GitHub token instead."
+                .to_string()
+        })?;
+
     let signin = GithubSignin::default();
     let device = signin
-        .request_device_code(GITHUB_CLIENT_ID)
+        .request_device_code(client_id)
         .await
         .map_err(|e| e.to_string())?;
 
@@ -328,7 +336,7 @@ pub async fn start_copilot_signin(
     let state = state.inner().clone();
     let app_handle = app.clone();
     tauri::async_runtime::spawn(async move {
-        match signin.poll_for_token(GITHUB_CLIENT_ID, &device).await {
+        match signin.poll_for_token(client_id, &device).await {
             Ok(token) => {
                 // Resolve identity, register the account, rebuild sources, and
                 // emit a fresh snapshot — same path as the paste flow.
@@ -517,7 +525,7 @@ pub async fn claude_diagnostics(state: tauri::State<'_, Arc<AppState>>) -> Resul
 /// Diagnostics: dump Codex's resolved home, CLI version, auth mode, the live
 /// `/codex/usage` payload (tokens redacted) when reachable, and the latest local
 /// `rate_limits` line. Used to report exec-mode null logs (openai/codex#14728) or
-/// endpoint shape changes. Reads no Headroom credentials — Codex is local-only.
+/// endpoint shape changes. Reads no Pay and Pray credentials — Codex is local-only.
 #[tauri::command]
 pub async fn codex_diagnostics(state: tauri::State<'_, Arc<AppState>>) -> Result<String, String> {
     let live = state.settings.read().await.codex_live_query;

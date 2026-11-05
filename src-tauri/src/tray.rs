@@ -37,11 +37,11 @@ impl TrayState {
 }
 
 pub fn install(app: &mut tauri::App) -> tauri::Result<()> {
-    let show = MenuItem::with_id(app, "show", "Open Headroom", true, None::<&str>)?;
+    let show = MenuItem::with_id(app, "show", "Open Pay and Pray", true, None::<&str>)?;
     let onboarding = MenuItem::with_id(app, "onboarding", "Set up accounts…", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", "Settings…", true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
-    let quit = MenuItem::with_id(app, "quit", "Quit Headroom", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Quit Pay and Pray", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &onboarding, &settings, &sep, &quit])?;
 
     TrayIconBuilder::with_id("main")
@@ -141,8 +141,8 @@ pub fn update_state(
 
     // Tooltip is where the percentage is actually visible on Windows (on hover).
     let tooltip = match worst_percentage(snapshot) {
-        Some(pct) if show_percentage => format!("Headroom — {pct}% used"),
-        _ => "Headroom".to_string(),
+        Some(pct) if show_percentage => format!("Pay and Pray — {pct}% used"),
+        _ => "Pay and Pray".to_string(),
     };
     let _ = tray.set_tooltip(Some(&tooltip));
 }

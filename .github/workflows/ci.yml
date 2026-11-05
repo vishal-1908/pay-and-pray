@@ -130,7 +130,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: headroom-${{ matrix.platform.name }}
+          name: pay-and-pray-${{ matrix.platform.name }}
           path: |
             src-tauri/target/${{ matrix.platform.target }}/release/bundle/dmg/*.dmg
             src-tauri/target/${{ matrix.platform.target }}/release/bundle/msi/*.msi
