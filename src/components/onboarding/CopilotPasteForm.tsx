@@ -39,8 +39,8 @@ export function CopilotPasteForm() {
         placeholder="ghp_… or github_pat_…"
         hint={
           <>
-            A GitHub token with no scopes selected (tokens with extra scopes are rejected). Your plan and quota are
-            read from your account.{' '}
+            A GitHub token with no scopes selected (tokens with extra scopes are rejected). Your
+            plan and quota are read from your account.{' '}
             <button
               type="button"
               onClick={() => openUrl('https://github.com/settings/tokens/new').catch(console.error)}
