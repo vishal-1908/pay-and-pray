@@ -188,6 +188,8 @@ pub enum SourceError {
     Parse(String),
 }
 
+// async_trait's generated `fetch` trips clippy::double_must_use on newer clippy.
+#[allow(clippy::double_must_use)]
 #[async_trait]
 pub trait QuotaSource: Send + Sync + 'static {
     /// Stable service id (e.g. `"claude"`, `"copilot:12345"`). Borrowed from the

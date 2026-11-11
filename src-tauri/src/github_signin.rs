@@ -139,6 +139,22 @@ pub struct GithubIdentity {
     pub id: String,
     pub login: String,
     pub name: String,
+    /// OAuth scopes granted to the token (`X-OAuth-Scopes`). Empty for
+    /// fine-grained tokens, which don't send the header.
+    pub scopes: Vec<String>,
+}
+
+impl GithubIdentity {
+    /// Granted scopes beyond the `read:user` we need. A pasted classic token
+    /// with e.g. `repo` would be stored in the keychain with far more reach
+    /// than this app uses, so callers reject it.
+    pub fn excess_scopes(&self) -> Vec<&str> {
+        self.scopes
+            .iter()
+            .map(String::as_str)
+            .filter(|s| *s != SCOPE)
+            .collect()
+    }
 }
 
 /// Resolve the GitHub identity for a token via `GET /user`. Distinct from the
@@ -161,6 +177,17 @@ async fn resolve_identity_at(base_url: &str, token: &str) -> anyhow::Result<Gith
     if !resp.status().is_success() {
         anyhow::bail!("GitHub /user failed: HTTP {}", resp.status());
     }
+    let scopes = resp
+        .headers()
+        .get("x-oauth-scopes")
+        .and_then(|v| v.to_str().ok())
+        .map(|v| {
+            v.split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect()
+        })
+        .unwrap_or_default();
     let body: UserResponse = resp.json().await?;
     let login = body.login;
     Ok(GithubIdentity {
@@ -170,6 +197,7 @@ async fn resolve_identity_at(base_url: &str, token: &str) -> anyhow::Result<Gith
             .filter(|n| !n.is_empty())
             .unwrap_or_else(|| login.clone()),
         login,
+        scopes,
     })
 }
 
@@ -356,5 +384,36 @@ mod tests {
 
         let id = resolve_identity_at(&server.uri(), "tok").await.unwrap();
         assert_eq!(id.name, "bob");
+    }
+
+    #[tokio::test]
+    async fn resolve_identity_reads_scopes_header() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/user"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .insert_header("X-OAuth-Scopes", "read:user, repo")
+                    .set_body_json(json!({ "id": 1, "login": "carol" })),
+            )
+            .mount(&server)
+            .await;
+
+        let id = resolve_identity_at(&server.uri(), "tok").await.unwrap();
+        assert_eq!(id.scopes, vec!["read:user", "repo"]);
+        assert_eq!(id.excess_scopes(), vec!["repo"]);
+    }
+
+    #[test]
+    fn excess_scopes_allows_none_and_read_user_only() {
+        let mut id = GithubIdentity {
+            id: "1".into(),
+            login: "a".into(),
+            name: "a".into(),
+            scopes: vec![],
+        };
+        assert!(id.excess_scopes().is_empty());
+        id.scopes = vec!["read:user".into()];
+        assert!(id.excess_scopes().is_empty());
     }
 }
