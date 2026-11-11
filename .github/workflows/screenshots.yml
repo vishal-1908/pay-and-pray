@@ -51,8 +51,16 @@ jobs:
       - name: Check for drift
         run: |
           if [[ -n "$(git status --porcelain docs/screenshots)" ]]; then
-            echo "::error::Screenshots are out of date. Run 'npm run screenshots' and commit docs/screenshots."
+            echo "::error::Screenshots are out of date. Run 'npm run screenshots' and commit docs/screenshots (or download the 'screenshots' artifact from this run)."
             git --no-pager diff --stat docs/screenshots
             exit 1
           fi
           echo "Screenshots are up to date."
+
+      - name: Upload regenerated screenshots
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: screenshots
+          path: docs/screenshots
+          retention-days: 7
